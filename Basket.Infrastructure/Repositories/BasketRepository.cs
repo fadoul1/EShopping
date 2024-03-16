@@ -19,7 +19,7 @@ public class BasketRepository : IBasketRepository
         var basket = await _redisCache.GetStringAsync(userName);
         if (string.IsNullOrEmpty(basket))
         {
-            return null;
+            return JsonConvert.DeserializeObject<ShoppingCart>(string.Empty)!;
         }
 
         return JsonConvert.DeserializeObject<ShoppingCart>(basket)!;

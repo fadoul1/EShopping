@@ -14,7 +14,10 @@ public class CreateShoppingCartCommandHandler
     private readonly IBasketRepository _basketRepository;
     private readonly DiscountGrpcService _discountGrpcService;
 
-    public CreateShoppingCartCommandHandler(IBasketRepository basketRepository, DiscountGrpcService discountGrpcService)
+    public CreateShoppingCartCommandHandler(
+        IBasketRepository basketRepository,
+        DiscountGrpcService discountGrpcService
+    )
     {
         _basketRepository = basketRepository;
         _discountGrpcService = discountGrpcService;
