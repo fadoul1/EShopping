@@ -20,6 +20,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Basket.Core\Basket.Core.csproj" />
+		<ProjectReference Include="..\EventBus.Messages\EventBus.Messages.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

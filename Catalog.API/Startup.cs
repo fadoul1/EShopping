@@ -10,14 +10,8 @@ using Microsoft.OpenApi.Models;
 
 namespace Catalog.API;
 
-public class Startup
+public class Startup(IConfiguration configuration)
 {
-    public IConfiguration Configuration;
-
-    public Startup(IConfiguration configuration)
-    {
-        Configuration = configuration;
-    }
 
     public void ConfigureServices(IServiceCollection services)
     {
@@ -27,7 +21,7 @@ public class Startup
         services
             .AddHealthChecks()
             .AddMongoDb(
-                Configuration["DatabaseSettings:ConnectionString"],
+                configuration["DatabaseSettings:ConnectionString"]!,
                 "Catalog  Mongo Db Health Check",
                 HealthStatus.Degraded
             );

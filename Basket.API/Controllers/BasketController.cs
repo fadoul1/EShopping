@@ -1,22 +1,26 @@
-﻿using System.Net;
-using Basket.Application.Commands;
-using Basket.Application.GrpcService;
+﻿using Basket.Application.Commands;
 using Basket.Application.Mappers;
 using Basket.Application.Queries;
 using Basket.Application.Responses;
 using Basket.Core.Entities;
+using EventBus.Messages.Events;
+using MassTransit;
+using MassTransit.Mediator;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace Basket.API.Controllers;
 
 public class BasketController : ApiController
 {
     private readonly ISender _sender;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public BasketController(IMediator mediator)
+    public BasketController(ISender sender, IPublishEndpoint publishEndpoint)
     {
-        _sender = mediator;
+        _sender = sender;
+        _publishEndpoint = publishEndpoint;
     }
 
     [HttpGet]
@@ -47,5 +51,27 @@ public class BasketController : ApiController
         var command = new DeleteBasketByUserNameCommand(userName);
         await _sender.Send(command);
         return Ok();
+    }
+
+    [Route("[action]")]
+    [HttpPost]
+    [ProducesResponseType((int)HttpStatusCode.Accepted)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> Checkout([FromBody] BasketCheckout basketCheckout)
+    {
+        var query = new GetBasketByUserNameQuery(basketCheckout.UserName);
+        var basket = await _sender.Send(query);
+        if (basket is null)
+        {
+            return BadRequest();
+        }
+
+        var eventMesg = BasketMapper.Mapper.Map<BasketCheckoutEvent>(basketCheckout);
+        eventMesg.TotalPrice = basket.TotalPrice;
+        await _publishEndpoint.Publish(eventMesg);
+        //remove the basket
+        var deletecommand = new DeleteBasketByUserNameCommand(basketCheckout.UserName);
+        await _sender.Send(deletecommand);
+        return Accepted();
     }
 }
