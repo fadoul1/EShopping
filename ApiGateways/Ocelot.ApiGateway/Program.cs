@@ -13,10 +13,17 @@ public class Program
 
     private static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((env, config) =>
-            {
-                config.AddJsonFile($"ocelot.{env.HostingEnvironment.EnvironmentName}.json", true, true);
-            }).ConfigureWebHostDefaults(webBuilder =>
+            .ConfigureAppConfiguration(
+                (env, config) =>
+                {
+                    config.AddJsonFile(
+                        $"ocelot.{env.HostingEnvironment.EnvironmentName}.json",
+                        true,
+                        true
+                    );
+                }
+            )
+            .ConfigureWebHostDefaults(webBuilder =>
             {
                 webBuilder.UseStartup<Startup>();
             });
