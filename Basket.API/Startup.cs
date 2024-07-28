@@ -7,6 +7,7 @@ using Basket.Core.Repositories;
 using Basket.Infrastructure.Repositories;
 using Discount.Grpc.Protos;
 using HealthChecks.UI.Client;
+using MassTransit;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -14,11 +15,11 @@ namespace Basket.API;
 
 public class Startup
 {
-    public IConfiguration Configuration;
+    private readonly IConfiguration _configuration;
 
     public Startup(IConfiguration configuration)
     {
-        Configuration = configuration;
+        _configuration = configuration;
     }
 
     public void ConfigureServices(IServiceCollection services)
@@ -37,7 +38,6 @@ public class Startup
                 "CorsPolicy",
                 policy =>
                 {
-                    //TODO read the same from settings for prod deployment
                     policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
                 }
             );
@@ -46,7 +46,7 @@ public class Startup
         //Redis Settings
         services.AddStackExchangeRedisCache(options =>
         {
-            options.Configuration = Configuration.GetValue<string>(
+            options.Configuration = _configuration.GetValue<string>(
                 "CacheSettings:ConnectionString"
             );
         });
@@ -62,7 +62,7 @@ public class Startup
 
         services.AddScoped<DiscountGrpcService>();
         services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>(o =>
-            o.Address = new Uri(Configuration["GrpcSettings:DiscountUrl"])
+            o.Address = new Uri(_configuration["GrpcSettings:DiscountUrl"])
         );
 
         services.AddSwaggerGen(options =>
@@ -76,10 +76,18 @@ public class Startup
         services
             .AddHealthChecks()
             .AddRedis(
-                Configuration["CacheSettings:ConnectionString"],
+                _configuration["CacheSettings:ConnectionString"],
                 "Redis Health",
                 HealthStatus.Degraded
             );
+
+        services.AddMassTransit(config =>
+        {
+            config.UsingRabbitMq((ct, cfg) =>
+            {
+                cfg.Host(_configuration["EventBusSettings:HostAddress"]);
+            });
+        });
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

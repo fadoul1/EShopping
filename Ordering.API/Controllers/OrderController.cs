@@ -7,25 +7,16 @@ using Ordering.Application.Responses;
 
 namespace Ordering.API.Controllers;
 
-public class OrderController(IMediator _sender) : ApiController
+public class OrderController(ISender sender) : ApiController
 {
     [HttpGet("{userName}", Name = "GetOrdersByUserName")]
     [ProducesResponseType(typeof(IEnumerable<OrderResponse>), (int)HttpStatusCode.OK)]
     public async Task<ActionResult<IEnumerable<OrderResponse>>> GetOrdersByUserName(string userName)
     {
         var query = new GetOrderListQuery(userName);
-        var orders = await _sender.Send(query);
+        var orders = await sender.Send(query);
         return Ok(orders);
-    }
-
-    //Just for testing locally as it will be processed in queue
-    [HttpPost(Name = "CheckoutOrder")]
-    [ProducesResponseType((int)HttpStatusCode.OK)]
-    public async Task<ActionResult<int>> CheckoutOrder([FromBody] CheckoutOrderCommand command)
-    {
-        var result = await _sender.Send(command);
-        return Ok(result);
-    }
+    }  
 
     [HttpPut(Name = "UpdateOrder")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -33,7 +24,7 @@ public class OrderController(IMediator _sender) : ApiController
     [ProducesDefaultResponseType]
     public async Task<ActionResult> UpdateOrder([FromBody] UpdateOrderCommand command)
     {
-        await _sender.Send(command);
+        await sender.Send(command);
         return NoContent();
     }
 
@@ -44,7 +35,7 @@ public class OrderController(IMediator _sender) : ApiController
     public async Task<ActionResult> DeleteOrder(int id)
     {
         var cmd = new DeleteOrderCommand() { Id = id };
-        await _sender.Send(cmd);
+        await sender.Send(cmd);
         return NoContent();
     }
 }
